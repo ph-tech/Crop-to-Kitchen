@@ -1,0 +1,6 @@
+{
+  "name": "Crop-to-Kitchen",
+  "description": "A smart supply chain solution connecting farmers to kitchens using AI-driven spoilage detection and logistics optimization.",
+  "requestFramePermissions": ["camera", "geolocation"],
+  "majorCapabilities": ["AI Crop Analysis", "Optimized Logistics Pooling", "Real-time Supply Chain Tracking"]
+}

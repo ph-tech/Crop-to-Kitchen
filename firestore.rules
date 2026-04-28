@@ -1,0 +1,52 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(data) {
+      return isSignedIn() && data.farmerId == request.auth.uid;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isValidSubmission(data) {
+      return data.crop_type is string && data.crop_type.size() <= 50
+          && data.ripeness_index is number && data.ripeness_index >= 0 && data.ripeness_index <= 1
+          && data.days_to_spoilage is number && data.days_to_spoilage >= 0
+          && data.status in ['pending_pickup', 'pooled', 'collected']
+          && data.location.lat is number && data.location.lng is number;
+    }
+
+    match /submissions/{submissionId} {
+      allow create: if isSignedIn() && isValidSubmission(request.resource.data) && request.resource.data.farmerId == request.auth.uid;
+      allow read: if isSignedIn(); // Allow drivers to see submissions for pooling
+      allow update: if isSignedIn() && (
+        // Farmer updates their own submission
+        (isOwner(resource.data) && isValidSubmission(request.resource.data) && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'ripeness_index', 'days_to_spoilage', 'photoUrl']))
+        ||
+        // Logistics engine or driver updates
+        (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'poolId', 'collectedAt']))
+      );
+    }
+
+    match /pools/{poolId} {
+      allow create: if isSignedIn();
+      allow read: if isSignedIn();
+      allow update: if isSignedIn() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'optimizedPath', 'driverId', 'completedAt']);
+    }
+
+    match /users/{userId} {
+      allow read: if isSignedIn();
+      allow write: if isSignedIn() && request.auth.uid == userId;
+    }
+  }
+}

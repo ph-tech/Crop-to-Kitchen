@@ -1,0 +1,66 @@
+{
+  "entities": {
+    "CropSubmission": {
+      "title": "Crop Submission",
+      "description": "Metadata for a crop photo uploaded by a farmer",
+      "type": "object",
+      "properties": {
+        "crop_type": { "type": "string" },
+        "ripeness_index": { "type": "number" },
+        "days_to_spoilage": { "type": "number" },
+        "location": {
+          "type": "object",
+          "properties": {
+            "lat": { "type": "number" },
+            "lng": { "type": "number" }
+          }
+        },
+        "timestamp": { "type": "string", "format": "date-time" },
+        "status": {
+          "type": "string",
+          "enum": ["pending_pickup", "pooled", "collected"]
+        },
+        "farmerId": { "type": "string" },
+        "photoUrl": { "type": "string" },
+        "poolId": { "type": "string" },
+        "collectedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["crop_type", "ripeness_index", "days_to_spoilage", "location", "timestamp", "status", "farmerId"]
+    },
+    "Pool": {
+      "title": "Logistics Pool",
+      "description": "A group of submissions pooled for a single driver pickup",
+      "type": "object",
+      "properties": {
+        "driverId": { "type": "string" },
+        "status": { "type": "string", "enum": ["active", "completed"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "completedAt": { "type": "string", "format": "date-time" },
+        "submissionIds": { "type": "array", "items": { "type": "string" } },
+        "locations": { 
+          "type": "array", 
+          "items": { 
+            "type": "object", 
+            "properties": { 
+              "lat": { "type": "number" }, 
+              "lng": { "type": "number" },
+              "label": { "type": "string" }
+            } 
+          } 
+        },
+        "optimizedPath": { "type": "array", "items": { "type": "object", "properties": { "lat": { "type": "number" }, "lng": { "type": "number" } } } }
+      },
+      "required": ["status", "createdAt", "submissionIds", "locations"]
+    }
+  },
+  "firestore": {
+    "submissions": {
+      "schema": "CropSubmission",
+      "description": "Collection of crop submissions from farmers"
+    },
+    "pools": {
+      "schema": "Pool",
+      "description": "Collection of logistics pools for drivers"
+    }
+  }
+}
